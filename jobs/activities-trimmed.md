@@ -15,11 +15,18 @@ report.
 
 ## Scope constants
 
-- [ ] Person-facts freshness: a verified Person fact or profile is current for
-  30 calendar days.
+- [ ] Person-facts freshness, counted from the fact's last actual verification
+  date: birthdate and formative club 180 days; team affiliation, profile URL,
+  and person record changes 30 days.
+- [ ] A freshness period applies only when the verification date is recorded in
+  evidence or a prior report; otherwise verify the fact.
 - [ ] Unresolved carry-over: a broadcast left unresolved may be carried over for
-  3 calendar days without new research.
-- [ ] Star sweep: the full tier_0 sweep runs once a week, on the Monday run.
+  3 days from the date it was last actually researched, not from the latest
+  report.
+- [ ] When a carried-over broadcast starts within the period, research it again
+  at least 1 day before the start.
+- [ ] Star sweep: run the full tier_0 sweep when the last completed sweep,
+  recorded in a report, is more than 7 days old.
 
 ## Run state and outcomes
 
@@ -67,8 +74,9 @@ appears.
 - [ ] In Steps 5–6, verify only the tracked activity IDs and the public dates
   they affect.
 - [ ] Research shared person facts, participant lists, and sources once per run.
-- [ ] Reuse a verified person fact or profile under 30 days old when the person
-  is not newly linked in this run and no new evidence contradicts it.
+- [ ] Reuse a person fact or profile only within its freshness period, when the
+  person is not newly linked in this run, and when no new evidence
+  contradicts it.
 - [ ] Recheck shared research if evidence conflicts or the event, round, or
   date differs.
 - [ ] Verify each segment's own times and links separately.
@@ -159,12 +167,14 @@ Work only on selected broadcasts that remain visible.
 
 ### Unresolved carry-over
 
-- [ ] A broadcast left unresolved in a report within the last 3 calendar days
-  is carried over without new research when its title and start/end times still
-  match that report.
-- [ ] Carry forward the previous reason and organization.
-- [ ] Re-research it when it changes, when the 3-day period lapses, or when
-  Step 4 processing of the same event yields new evidence.
+- [ ] A broadcast left unresolved may be carried over without new research only
+  when its title, description, categories, channels, times, and linked context
+  still match the report that last researched it.
+- [ ] Carry forward the previous reason, organization, and the last actual
+  research date.
+- [ ] Re-research it when any recorded metadata changed, when the 3-day period
+  from the last actual research lapses, when the broadcast starts within the
+  period, or when Step 4 processing of the same event yields new evidence.
 
 ### Apply the research result
 
@@ -255,12 +265,19 @@ Work only on selected broadcasts that remain visible.
 - [ ] For an unchanged, reused activity or segment, skip the checks whose inputs
   are unchanged. A segment is unchanged when its times, channels, participants,
   and links are the same as in the last run that verified it.
+- [ ] Skip a check only when the prior report records the date and source basis
+  of that verification; otherwise repeat the check.
+- [ ] Prior verification does not imply the external sources are unchanged.
+  Re-verify from the live source whenever the check falls on the day before the
+  segment start or later, and for sources that change during an event, such as
+  rosters, eliminations, and tee times.
 
 ### A. Times
 
 - [ ] Verify each changed segment's broadcast start and end against Swedish TV
   schedules, such as TV.nu or SVT.
-- [ ] Skip unchanged segments already verified under the skip rule.
+- [ ] Skip an unchanged segment only under the skip rule; re-verify live on the
+  day before the segment start or later.
 - [ ] Round times to the nearest five minutes.
 - [ ] Use each segment's own range.
 - [ ] Use F for detail activity times.
@@ -269,8 +286,8 @@ Work only on selected broadcasts that remain visible.
 
 - [ ] Resolve each displayed provider through existing `StreamLink` sources
   first.
-- [ ] A StreamLink source that resolves and was not changed in this run needs no
-  re-lookup.
+- [ ] A StreamLink source verified under the skip rule needs no re-lookup,
+  except on the day before the segment start or later.
 - [ ] If needed, use `BroadcastChannelLinkCatalog` as a presentation fallback.
 - [ ] Match trimmed source titles case-insensitively.
 - [ ] Find missing or stale provider links on TV.nu event details.
@@ -289,10 +306,10 @@ Work only on selected broadcasts that remain visible.
 - [ ] Use Person entities only for competing athletes.
 - [ ] Base new inclusions and exclusions on complete official lists, confirmed
   rosters, or equivalent authority.
-- [ ] Existing participant links verified in a prior run stand unless the
-  official list changed since that run.
-- [ ] Verify only newly linked participants, list differences, and eliminated
-  statuses.
+- [ ] Existing participant links stand only under the skip rule.
+- [ ] Verify newly linked participants, list differences, and eliminated
+  statuses; re-verify the complete official list on the day before the
+  segment start or later.
 - [ ] Prefer official squad inclusion over rumors of non-participation.
 - [ ] Delete incorrect `activity_entity_links`.
 - [ ] Retain eliminated competitors with `is_active = false`.
@@ -314,9 +331,9 @@ Work only on selected broadcasts that remain visible.
 
 ### D. Person facts and profiles
 
-- [ ] Apply the run-wide 30-day freshness rule: reuse a stored birthdate,
-  formative club, team link, or profile when its evidence is under 30 days old
-  and uncontradicted, and the person was not newly linked in this run.
+- [ ] Apply the run-wide freshness periods per fact type.
+- [ ] When a stored fact's verification date is unknown, verify it before
+  relying on it.
 - [ ] Otherwise verify against authoritative athlete, federation, or club
   sources.
 - [ ] Store verified birthdates for displayed and new people, including
@@ -359,8 +376,10 @@ Treat these only as context, not sufficient qualification on their own:
 
 - [ ] Review stars only for participants touched in this run.
 - [ ] Correct stale star assignments found in that review.
-- [ ] On the Monday run, additionally sweep all existing tier_0 assignments and
-  correct any that no longer qualify.
+- [ ] When the sweep is due under the scope constants, sweep all existing
+  tier_0 assignments, correct any that no longer qualify, and record the
+  completed sweep date in the report.
+- [ ] An incomplete sweep resumes from the run checkpoint before other work.
 
 ### F. Detail activities
 
@@ -443,8 +462,11 @@ Include:
 - [ ] Created or changed activity IDs, public dates, and linked broadcast IDs.
 - [ ] Hidden broadcast IDs, reasons, applied corrections, and evidence.
 - [ ] Unresolved items, failed checks, and visible broadcast IDs or
-  organizations. List carried-over unresolved items compactly with ID and the
-  carried-forward reason.
+  organizations. List carried-over unresolved items compactly with ID, the
+  carried-forward reason, and the last actual research date.
+- [ ] The date and source basis of each verification relied on under the skip
+  rule, so a later run can reproduce it.
+- [ ] The date of the last completed star sweep when a sweep ran.
 - [ ] Before and after card counts per affected date on `https://sesport.se`,
   with explanations.
 
