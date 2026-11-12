@@ -46,6 +46,8 @@
 
 - Reused group 0114eabb-fe44-4af2-b45d-851d3d0ac468 and extended its end date
   from 10 to 18 Nov.
+- After this run, the operator renamed the group from "UEFA Women's Champions League"
+  to "Champions League".
 - Created and published 0e854df9-b3e4-410f-9133-bcb2b3c85134:
   BK Häcken–Manchester City, 18 Nov, 18:40–21:00, TV12.
   Broadcast: 854f595d-1e8b-253f-8962-db8f4e04ab64.
