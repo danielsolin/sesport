@@ -336,9 +336,8 @@ Treat these only as context, not sufficient qualification on their own:
 - [ ] Confirm grouped schedule cards use only the group title.
 - [ ] Confirm separate card headings use `Group title: activity title`.
 - [ ] Check schedule rows' segment titles, channels, stream links, and time ranges.
-- Grouped cards intentionally show one article for the primary activity while the
-  timeline and channels may cover the full group. Treat this as expected behavior,
-  not a presentation defect; verify each segment in its schedule row.
+- [ ] Accept grouped cards showing a combined timeline and channels with only the first
+  activity's article.
 - [ ] Confirm displayed people, including inactive people, have ages and clubs.
 - [ ] Confirm displayed names link to working `entities.url` profiles.
 - [ ] Verify team-sport flags under existing foreign or national-team rules.
