@@ -15,7 +15,9 @@
   IDs, 75 remain present as hidden and unprocessed; 35 are now absent.
 - Of 49 unresolved IDs, 48 remain visible and unprocessed; one is now absent.
 - A dagger (†) marks a snapshot ID absent at final read-back. Its original Step 3
-  classification is retained in the register. The disappearance cause is unknown.
+  classification is retained in the register. The operator later reported a
+  database cleanup on 13 Nov, which likely explains the missing rows; no audit trail
+  confirms which rows it affected.
 - No broadcast deletion code or database trigger was found. The latest recorded
   broadcast import preceded the snapshot. The absent rows were not recreated.
 
