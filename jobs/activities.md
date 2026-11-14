@@ -130,6 +130,13 @@ Work only on selected broadcasts that remain visible.
 - [ ] Record the search and its source.
 - [ ] Use complete official entries, start lists, confirmed rosters, or equivalent
   authoritative sources when participation is not conclusively ruled out.
+- [ ] For a scheduled fixture naming a Swedish national team, treat Swedish
+  participation as confirmed even if the match-day roster is unavailable.
+  - [ ] Publish with the latest official camp or window roster, or a reliable
+    current pre-match roster, as provisional participants. If neither exists,
+    use the team's latest official roster.
+  - [ ] Mark provisional rosters in Swedish public text and replace them when the
+    match-day roster is published.
 
 - [ ] If a reliable, complete finding confirms no Swedish participants, apply it to all
   selected broadcasts for that established series and season.
