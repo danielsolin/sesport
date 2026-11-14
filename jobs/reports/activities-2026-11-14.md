@@ -21,6 +21,25 @@
 - No broadcast deletion code or database trigger was found. The latest recorded
   broadcast import preceded the snapshot. The absent rows were not recreated.
 
+## Follow-up after the initial audit
+
+### Sweden–Belgium basketball
+
+- At 2026-11-14 08:24 UTC, published `Sverige – Belgien`, activity
+  `8997bc73-08cc-49cc-aa90-aa3f329e2d6f`, in the existing `EM-kval` group
+  `b3000efd-f00a-4a29-89b5-26079365df0c`.
+- Activity time is 15 Nov 15:50–18:00 CET; the federation lists tip-off at 16:00.
+- The public description marks 12 participants from SVT's 13 Nov guide as
+  provisional. The federation called 14 players to the window and says 12 will play
+  each Belgium match, but did not identify which 12. Matilda Ekh and Cecilia
+  Holmberg, the other two window players, are omitted from the provisional list.
+- Linked, processed, and hid broadcasts `f3569876-e1a0-da37-9d70-b55cfb595f43`,
+  `6e42c75f-d0b7-1934-9cc6-b0ba283e0977`, and
+  `50bd5925-7c2f-0535-a2b5-8cb01461f23b`.
+- Saved federation schedule and roster evidence, SVT schedule evidence, and the
+  direct SVT Play link. The public 15 Nov page now has 11 cards, up from 10 after
+  the initial run.
+
 ## Public card counts
 
 Counts were recorded once per date on sesport.se. Grouped cards count once.
@@ -176,7 +195,8 @@ Trophy, and the GCL semi-final date.
 ## Broadcast outcome register
 
 The snapshot contained 177 unique IDs. Each ID appears once in the outcome lists below.
-Final audit: 18 processed rows; 75 rejected present, 35 rejected absent; 48 unresolved
+These lists record the initial 06:25 audit, before the basketball follow-up above.
+At that audit: 18 processed rows; 75 rejected present, 35 rejected absent; 48 unresolved
 present, and one unresolved absent.
 
 ## Organization markers added to unresolved IDs
@@ -481,6 +501,9 @@ Organization: PGA Tour
   [Andreas profile], [Milla profile], [Nikolaj profile], [Team Sweden], and
   [Norrköpings KK]. TV.nu listing: [TV.nu Finlandia].
 - Final public pages: [14 Nov page], [15 Nov page], [19 Nov page], and [20 Nov page].
+- Basketball follow-up sources: the official SBF call-up and SVT guide.
+  https://via.tt.se/pressmeddelande/4600379/damlandslagets-em-kvaltrupp-uttagen?publisherId=2592980
+  https://www.svt.se/sport/basket/guide-sa-funkar-damernas-kval-till-basket-em-2027
 - TV.nu segment records and provider StreamLink sources were saved on each activity.
 - The new ALMS FP1 ParticipationEvidence source is stored on activity
   `7d8e716a-082c-5b23-a8a4-67e1c1eb5c05` as
