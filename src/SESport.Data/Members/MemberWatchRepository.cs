@@ -199,7 +199,11 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
             e.id
          from entities e
          where e.id = @entity_id
-            and e.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
+            and e.entity_type_id in (
+               '{{TrackedEntityTypeIds.Person}}',
+               '{{TrackedEntityTypeIds.Team}}',
+               '{{TrackedEntityTypeIds.NationalTeam}}'
+            )
          on conflict (member_id, entity_id) do nothing
          returning entity_id
          """;

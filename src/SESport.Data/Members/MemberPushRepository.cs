@@ -123,11 +123,12 @@ public sealed class MemberPushRepository(NpgsqlDataSource dataSource)
    )
    {
       var sql = $$"""
-         with watched_activities as (
+         with {{MemberWatchActivityMatcher.GetActivityMatchesCteSql()}},
+         watched_activities as (
             select
                member.id as member_id,
-               watch.entity_id as watched_person_id,
-               person.canonical_name as person_name,
+               watch_match.entity_id as watched_entity_id,
+               watched_entity.canonical_name as watched_entity_name,
                activity.id as activity_id,
                activity.activity_group_id,
                activity.activity_date,
@@ -147,16 +148,13 @@ public sealed class MemberPushRepository(NpgsqlDataSource dataSource)
                   @default_lead_time_minutes
                ) as lead_time_minutes,
                activity.tv_channel_name
-            from members member
-            join member_entity_watches watch
-               on watch.member_id = member.id
-            join activity_entity_links link
-               on link.entity_id = watch.entity_id
-               and link.is_active
-            join entities person
-               on person.id = link.entity_id
+            from watch_activity_matches watch_match
+            join members member
+               on member.id = watch_match.member_id
+            join entities watched_entity
+               on watched_entity.id = watch_match.entity_id
             join activities activity
-               on activity.id = link.activity_id
+               on activity.id = watch_match.activity_id
             left join activity_groups activity_group
                on activity_group.id = activity.activity_group_id
             left join lateral (
@@ -192,8 +190,6 @@ public sealed class MemberPushRepository(NpgsqlDataSource dataSource)
             where activity.publication_status_id =
                '{{ActivityPublicationStatusIds.Published}}'
                and activity.starts_at is not null
-               and person.entity_type_id =
-                  '{{TrackedEntityTypeIds.Person}}'
                and coalesce(
                   member.push_notification_lead_time_minutes,
                   @default_lead_time_minutes
@@ -218,8 +214,6 @@ public sealed class MemberPushRepository(NpgsqlDataSource dataSource)
                      select 1
                      from watched_activities detailed
                      where detailed.member_id = watched.member_id
-                        and detailed.watched_person_id =
-                           watched.watched_person_id
                         and detailed.activity_group_id =
                            watched.activity_group_id
                         and detailed.activity_date = watched.activity_date
@@ -262,9 +256,9 @@ public sealed class MemberPushRepository(NpgsqlDataSource dataSource)
                   order by eligible.activity_id
                ) as activity_ids,
                string_agg(
-                  distinct eligible.person_name,
-                  ', ' order by eligible.person_name
-               ) as person_names,
+                  distinct eligible.watched_entity_name,
+                  ', ' order by eligible.watched_entity_name
+               ) as watched_entity_names,
                string_agg(
                   distinct nullif(btrim(channel.channel_name), ''),
                   ', ' order by nullif(btrim(channel.channel_name), '')
@@ -300,8 +294,6 @@ public sealed class MemberPushRepository(NpgsqlDataSource dataSource)
                         select 1
                         from watched_activities detailed
                         where detailed.member_id = broad.member_id
-                           and detailed.watched_person_id =
-                              broad.watched_person_id
                            and detailed.activity_group_id =
                               broad.activity_group_id
                            and detailed.activity_date = broad.activity_date
@@ -384,7 +376,7 @@ public sealed class MemberPushRepository(NpgsqlDataSource dataSource)
             claimed.member_id,
             claimed.activity_id,
             candidates.title,
-            candidates.person_names,
+            candidates.watched_entity_names,
             candidates.starts_at,
             candidates.public_date_mode,
             candidates.lead_time_minutes,

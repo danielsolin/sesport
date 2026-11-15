@@ -18,7 +18,7 @@ public sealed record MemberActivityPushNotification(
    Guid MemberId,
    Guid ActivityId,
    string ActivityTitle,
-   string PersonNames,
+   string WatchedEntityNames,
    DateTimeOffset StartsAt,
    string PublicDateMode,
    int LeadTimeMinutes,

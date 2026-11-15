@@ -58,7 +58,7 @@ public sealed class MemberPushNotificationWorkerTests
    }
 
    [Fact]
-   public void NotificationIsRetriedWhenAnyDeliveryHasTransientFailure()
+   public void NotificationIsCompletedWhenAnyDeliverySucceeds()
    {
       var result = new MemberPushDeliveryResult(
          1,
@@ -66,7 +66,7 @@ public sealed class MemberPushNotificationWorkerTests
          1
       );
 
-      Assert.False(
+      Assert.True(
          MemberPushNotificationWorker.ShouldMarkNotificationSent(result)
       );
    }

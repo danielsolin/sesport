@@ -59,7 +59,8 @@ public sealed class MemberPushNotificationWorker(
       MemberPushDeliveryResult result
    )
    {
-      return !result.HasTransientFailure;
+      return result.SuccessfulDeliveries > 0 ||
+         !result.HasTransientFailure;
    }
 
    private async Task SweepAsync(CancellationToken cancellationToken)
@@ -103,20 +104,25 @@ public sealed class MemberPushNotificationWorker(
             }
             else
             {
-               await repository.MarkNotificationSentAsync(
-                  notification.MemberId,
-                  notification.ActivityId,
-                  now,
-                  cancellationToken
-               );
+               if(result.SuccessfulDeliveries == 0)
+               {
+                  await repository.MarkNotificationSentAsync(
+                     notification.MemberId,
+                     notification.ActivityId,
+                     now,
+                     cancellationToken
+                  );
+               }
 
                logger.LogInformation(
                   "Member push notification for activity {ActivityId} " +
                   "completed with {SuccessfulDeliveries} accepted deliveries " +
-                  "and {PermanentFailures} expired subscriptions removed.",
+                  "and {PermanentFailures} expired subscriptions removed; " +
+                  "{TransientFailures} transient failures will not be retried.",
                   notification.ActivityId,
                   result.SuccessfulDeliveries,
-                  result.PermanentFailures
+                  result.PermanentFailures,
+                  result.TransientFailures
                );
             }
          }

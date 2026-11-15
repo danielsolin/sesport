@@ -53,6 +53,7 @@ public sealed class MemberPushNotificationSender(
       var successfulDeliveries = 0;
       var permanentFailures = 0;
       var transientFailures = 0;
+      var notificationMarkedSent = false;
 
       using(authentication)
       {
@@ -77,6 +78,7 @@ public sealed class MemberPushNotificationSender(
                Urgency = PushMessageUrgency.High
             };
 
+            var deliverySucceeded = false;
             try
             {
                await pushServiceClient.RequestPushMessageDeliveryAsync(
@@ -86,6 +88,7 @@ public sealed class MemberPushNotificationSender(
                   cancellationToken
                );
                successfulDeliveries++;
+               deliverySucceeded = true;
             }
             catch(PushServiceClientException exception)
                when(exception.StatusCode is
@@ -115,6 +118,17 @@ public sealed class MemberPushNotificationSender(
                   notification.ActivityId,
                   subscription.Id
                );
+            }
+
+            if(deliverySucceeded && !notificationMarkedSent)
+            {
+               await pushRepository.MarkNotificationSentAsync(
+                  notification.MemberId,
+                  notification.ActivityId,
+                  now,
+                  CancellationToken.None
+               );
+               notificationMarkedSent = true;
             }
          }
       }
@@ -153,14 +167,14 @@ public sealed class MemberPushNotificationSender(
       );
       var activityAnchor = ActivityAnchorPrefix +
          notification.ActivityId.ToString("N");
-      var personNames = FormatPersonNames(
-         notification.PersonNames,
+      var watchedNames = FormatWatchedEntityNames(
+         notification.WatchedEntityNames,
          maxVisiblePersonNames
       );
       var startTime = TimeDisplay.FormatLocalTimeWithoutSeconds(
          notification.StartsAt
       );
-      var body = personNames +
+      var body = watchedNames +
          " deltar i " + notification.ActivityTitle +
          ". Start " + startTime + ".";
       var channelNames = FormatChannelNames(notification.TvChannelName);
@@ -186,22 +200,22 @@ public sealed class MemberPushNotificationSender(
       );
    }
 
-   private static string FormatPersonNames(
-      string personNames,
-      int maxVisiblePersonNames
+   private static string FormatWatchedEntityNames(
+      string watchedEntityNames,
+      int maxVisibleEntityNames
    )
    {
-      var names = personNames.Split(
+      var names = watchedEntityNames.Split(
          ',',
          StringSplitOptions.TrimEntries |
             StringSplitOptions.RemoveEmptyEntries
       );
       var visibleNames = names.Take(
-         Math.Max(1, maxVisiblePersonNames)
+         Math.Max(1, maxVisibleEntityNames)
       );
       var formattedNames = string.Join(", ", visibleNames);
 
-      return names.Length > maxVisiblePersonNames
+      return names.Length > maxVisibleEntityNames
          ? formattedNames + " med flera"
          : formattedNames;
    }

@@ -50,7 +50,7 @@ public sealed class MemberPushNotificationSenderTests
    }
 
    [Fact]
-   public void CreatePayloadLimitsPersonNamesToTheConfiguredDefault()
+   public void CreatePayloadLimitsWatchedNamesToTheConfiguredDefault()
    {
       var notification = new MemberActivityPushNotification(
          Guid.NewGuid(),

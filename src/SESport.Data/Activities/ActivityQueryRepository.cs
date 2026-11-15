@@ -8,6 +8,7 @@ using SESport.Core.Domain;
 using SESport.Core.Formatting;
 using SESport.Core.Sources;
 using SESport.Data.Models;
+using SESport.Data.Members;
 
 using System.Text;
 using System.Text.RegularExpressions;
@@ -159,16 +160,9 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
                )
                and exists (
                   select 1
-                  from activity_entity_links watched_link
-                  join member_entity_watches watch
-                     on watch.entity_id = watched_link.entity_id
-                     and watch.member_id = @member_id
-                  join entities watched_person
-                     on watched_person.id = watched_link.entity_id
-                  where watched_link.activity_id = a.id
-                     and watched_link.is_active
-                     and watched_person.entity_type_id =
-                        '{{TrackedEntityTypeIds.Person}}'
+                  from watch_activity_matches watch_match
+                  where watch_match.member_id = @member_id
+                     and watch_match.activity_id = a.id
                )
                {{PublicActivityQuerySupport.ExclusionClause}}
          """,
@@ -183,7 +177,10 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
             PublicActivityQuerySupport.AddExclusionParameters(command);
          },
          cancellationToken,
-         watchedByMemberId: memberId
+         watchedByMemberId: memberId,
+         cteSql: MemberWatchActivityMatcher.GetActivityMatchesCteSql(
+            filterToMember: true
+         )
       );
 
       return await ApplyNationalTeamFlagsAsync(
@@ -919,13 +916,15 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
       string sportNameExpression,
       Action<NpgsqlCommand>? configureCommand,
       CancellationToken cancellationToken,
-      Guid? watchedByMemberId = null
+      Guid? watchedByMemberId = null,
+      string? cteSql = null
    )
    {
       var sql = CreateActivityListSql(
          whereClause,
          orderClause,
-         sportNameExpression
+         sportNameExpression,
+         cteSql
       );
 
       await using var command = dataSource.CreateCommand(sql);
@@ -1347,11 +1346,18 @@ public sealed class ActivityQueryRepository(NpgsqlDataSource dataSource)
    private static string CreateActivityListSql(
       string whereClause,
       string orderClause,
-      string sportNameExpression
+      string sportNameExpression,
+      string? cteSql
    )
    {
-      var builder = new StringBuilder()
-         .AppendLine("select")
+      var builder = new StringBuilder();
+      if(!string.IsNullOrWhiteSpace(cteSql))
+      {
+         builder.AppendLine("with");
+         builder.AppendLine(cteSql);
+      }
+
+      builder.AppendLine("select")
          .AppendLine("   a.id,")
          .AppendLine("   a.title,")
          .AppendLine("   a.description,")
