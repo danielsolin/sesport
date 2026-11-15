@@ -45,7 +45,7 @@ http://localhost:5109
 ## Development hostname
 
 On the web host, `https://dev.sesport.se` is served by `sesport-dev.service`. The
-service runs the project from `/home/daniel/sesport/src/SESport.Web` with
+service runs the project from `/home/daniel/src/sesport/src/SESport.Web` with
 `dotnet watch`, so source and static-file changes are picked up without
 publishing. Caddy forwards the hostname to the service on port 5001.
 
@@ -112,9 +112,10 @@ password for this VPS setup. Keep any future relay credentials in the
 host-local `.env` file, never in tracked files.
 
 The login token is single-use and expires after fifteen minutes by default.
-Members can add person watches from /installningar. The page shows whether push
-is active in the current browser and can activate it for the device. Adding a
-watch also registers the browser push subscription as a fallback.
+Members can add watches for people, teams, and national teams from
+/installningar. The page shows whether push is active in the current browser
+and can activate it for the device. Adding a watch also registers the browser
+push subscription as a fallback.
 
 The production web services also need one VAPID key pair for Web Push. Keep
 the private key in the host-local .env file:

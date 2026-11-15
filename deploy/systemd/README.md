@@ -20,7 +20,7 @@ dotnet run --configuration Release
 It does not enable Browser Refresh or Hot Reload.
 
 The separate `sesport-dev.service` unit runs
-the VPS checkout at `/home/daniel/sesport/src/SESport.Web` with `dotnet watch`.
+`/home/daniel/src/sesport/src/SESport.Web` with `dotnet watch`.
 Source and static-file changes are therefore available at `https://dev.sesport.se`
 without a publish step. Caddy proxies that hostname to port 5001.
 

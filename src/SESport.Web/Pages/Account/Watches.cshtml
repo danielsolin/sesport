@@ -1,4 +1,5 @@
 @page "/installningar"
+@using SESport.Web.Formatting
 @model SESport.Web.Pages.Account.WatchesModel
 @{
    ViewData["Title"] = "Bevakningar";
@@ -80,8 +81,8 @@
          <label class="member-watches-search-field">
             <input name="q"
                    id="member-watches-search-input"
-                   placeholder="Sök person att bevaka, t.ex. Armand Duplantis"
-                   aria-label="Sök person"
+                   placeholder="Sök person, lag eller landslag att bevaka"
+                   aria-label="Sök person, lag eller landslag"
                    minlength="2"
                    aria-controls="member-watch-search-results"
                    aria-expanded="false"
@@ -110,11 +111,19 @@
          {
             var nextActivity = watch.NextActivity;
             <li class="member-watch-result">
-               @await Html.PartialAsync("_WatchPersonAvatar", watch)
+               @await Html.PartialAsync("_WatchEntityAvatar", watch)
                <div class="member-watch-name">
                   @watch.Name
+                  @if(!string.IsNullOrWhiteSpace(watch.AliasName))
+                  {
+                     <span class="member-watch-information">
+                        (@watch.AliasName)
+                     </span>
+                  }
                   <span class="member-watch-information">
-                     (@watch.DisplayInformation)
+                     (@MemberWatchEntityFormatter.GetTypeLabel(
+                        watch.EntityTypeId
+                     ), @watch.DisplayInformation)
                   </span>
                   @if(nextActivity is not null)
                   {

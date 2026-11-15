@@ -8,6 +8,13 @@ namespace SESport.Data.Members;
 
 public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
 {
+   private static readonly string[] WatchableEntityTypeIds =
+   [
+      TrackedEntityTypeIds.Person,
+      TrackedEntityTypeIds.Team,
+      TrackedEntityTypeIds.NationalTeam
+   ];
+
    public async Task<int> GetWatchedEntityCountAsync(
       Guid memberId,
       CancellationToken cancellationToken
@@ -25,14 +32,14 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
       return Convert.ToInt32(result);
    }
 
-   public async Task<IReadOnlyList<MemberPersonListItem>>
+   public async Task<IReadOnlyList<MemberWatchListItem>>
       GetWatchedEntitiesAsync(
       Guid memberId,
       DateTimeOffset now,
       CancellationToken cancellationToken
    )
    {
-      var sql = BuildPersonListSql(
+      var sql = BuildWatchEntityListSql(
          """
          join member_entity_watches watch
             on watch.entity_id = e.id
@@ -42,20 +49,25 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
          """,
          includeLimit: false,
          includeNextActivity: true,
-         includeSearchRanking: false
+         includeSearchRanking: false,
+         entityTypeIds: WatchableEntityTypeIds
       );
 
       await using var command = dataSource.CreateCommand(sql);
       command.Parameters.AddWithValue("member_id", memberId);
+      command.Parameters.AddWithValue(
+         "entity_type_ids",
+         WatchableEntityTypeIds
+      );
       AddNextActivityParameters(command, now);
       await using var reader = await command.ExecuteReaderAsync(
          cancellationToken
       );
-      var entities = new List<MemberPersonListItem>();
+      var entities = new List<MemberWatchListItem>();
 
       while(await reader.ReadAsync(cancellationToken))
       {
-         entities.Add(ReadPersonListItem(reader, includesNextActivity: true));
+         entities.Add(ReadWatchListItem(reader, includesNextActivity: true));
       }
 
       return entities;
@@ -68,6 +80,52 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
       CancellationToken cancellationToken
    )
    {
+      var entities = await SearchWatchEntitiesAsync(
+         query,
+         memberId,
+         maxResults,
+         [TrackedEntityTypeIds.Person],
+         cancellationToken
+      );
+      return entities
+         .Select(entity => new MemberPersonListItem(
+            entity.Id,
+            entity.Name,
+            entity.SportName,
+            entity.RelatedNames,
+            HasPrimaryImage: entity.HasPrimaryImage,
+            PrimaryImageSource: entity.PrimaryImageSource,
+            IsWatched: entity.IsWatched
+         ))
+         .ToArray();
+   }
+
+   public Task<IReadOnlyList<MemberWatchListItem>>
+      SearchWatchableEntitiesAsync(
+         string query,
+         Guid memberId,
+         int maxResults,
+         CancellationToken cancellationToken
+      )
+   {
+      return SearchWatchEntitiesAsync(
+         query,
+         memberId,
+         maxResults,
+         WatchableEntityTypeIds,
+         cancellationToken
+      );
+   }
+
+   private async Task<IReadOnlyList<MemberWatchListItem>>
+      SearchWatchEntitiesAsync(
+         string query,
+         Guid memberId,
+         int maxResults,
+         IReadOnlyCollection<string> entityTypeIds,
+         CancellationToken cancellationToken
+      )
+   {
       var searchTerms = query
          .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)
          .Select(term => term
@@ -78,7 +136,7 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
          .ToArray();
       if(searchTerms.Length == 0)
       {
-         return Array.Empty<MemberPersonListItem>();
+         return Array.Empty<MemberWatchListItem>();
       }
 
       var canonicalNameSql = NormalizeSearchSql("e.canonical_name");
@@ -92,7 +150,7 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
          "coalesce(context.related_search_names, '')"
       );
       var searchTermSql = NormalizeSearchSql("search_term.term");
-      var sql = BuildPersonListSql(
+      var sql = BuildWatchEntityListSql(
          string.Empty,
          $$"""
          and not exists (
@@ -112,29 +170,58 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
          """,
          includeLimit: true,
          includeNextActivity: false,
-         includeSearchRanking: true
+         includeSearchRanking: true,
+         entityTypeIds: entityTypeIds
       );
 
       await using var command = dataSource.CreateCommand(sql);
       command.Parameters.AddWithValue("search_terms", searchTerms);
       command.Parameters.AddWithValue("member_id", memberId);
       command.Parameters.AddWithValue("max_results", maxResults);
+      command.Parameters.AddWithValue(
+         "entity_type_ids",
+         entityTypeIds.ToArray()
+      );
       await using var reader = await command.ExecuteReaderAsync(
          cancellationToken
       );
-      var entities = new List<MemberPersonListItem>();
+      var entities = new List<MemberWatchListItem>();
 
       while(await reader.ReadAsync(cancellationToken))
       {
-         entities.Add(ReadPersonListItem(reader, includesNextActivity: false));
+         entities.Add(ReadWatchListItem(reader, includesNextActivity: false));
       }
 
       return entities;
    }
 
-   public async Task<MemberPrimaryImage?>
-      GetPersonPrimaryImageAsync(
+   public Task<MemberPrimaryImage?> GetPersonPrimaryImageAsync(
       Guid entityId,
+      CancellationToken cancellationToken
+   )
+   {
+      return GetPrimaryImageAsync(
+         entityId,
+         [TrackedEntityTypeIds.Person],
+         cancellationToken
+      );
+   }
+
+   public Task<MemberPrimaryImage?> GetWatchableEntityPrimaryImageAsync(
+      Guid entityId,
+      CancellationToken cancellationToken
+   )
+   {
+      return GetPrimaryImageAsync(
+         entityId,
+         WatchableEntityTypeIds,
+         cancellationToken
+      );
+   }
+
+   private async Task<MemberPrimaryImage?> GetPrimaryImageAsync(
+      Guid entityId,
+      IReadOnlyCollection<string> entityTypeIds,
       CancellationToken cancellationToken
    )
    {
@@ -143,10 +230,9 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
             coalesce(image.thumbnail_data, image.image_data),
             coalesce(image.thumbnail_mime_type, image.mime_type)
          from entity_images image
-         join entities person
-            on person.id = image.entity_id
-         where person.entity_type_id =
-            '{{TrackedEntityTypeIds.Person}}'
+         join entities watched_entity
+            on watched_entity.id = image.entity_id
+         where watched_entity.entity_type_id = any(@entity_type_ids)
             and image.entity_id = @entity_id
             and image.review_status =
                '{{EntityImageReviewStatusIds.Approved}}'
@@ -168,6 +254,10 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
 
       await using var command = dataSource.CreateCommand(sql);
       command.Parameters.AddWithValue("entity_id", entityId);
+      command.Parameters.AddWithValue(
+         "entity_type_ids",
+         entityTypeIds.ToArray()
+      );
       await using var reader = await command.ExecuteReaderAsync(
          cancellationToken
       );
@@ -241,7 +331,7 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
       return await reader.ReadAsync(cancellationToken);
    }
 
-   private static MemberPersonListItem ReadPersonListItem(
+   private static MemberWatchListItem ReadWatchListItem(
       NpgsqlDataReader reader,
       bool includesNextActivity
    )
@@ -269,9 +359,14 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
          );
       }
 
-      return new MemberPersonListItem(
+      var entityTypeColumn = includesNextActivity ? 13 : 10;
+      return new MemberWatchListItem(
          reader.GetGuid(0),
          reader.GetString(1),
+         reader.GetString(entityTypeColumn),
+         reader.IsDBNull(entityTypeColumn + 1)
+            ? null
+            : reader.GetString(entityTypeColumn + 1),
          reader.GetString(2),
          reader.GetString(3),
          nextActivity,
@@ -281,12 +376,13 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
       );
    }
 
-   private static string BuildPersonListSql(
+   private static string BuildWatchEntityListSql(
       string additionalFromSql,
       string additionalWhereSql,
       bool includeLimit,
       bool includeNextActivity,
-      bool includeSearchRanking
+      bool includeSearchRanking,
+      IReadOnlyCollection<string> entityTypeIds
    )
    {
       var limitSql = includeLimit
@@ -299,6 +395,13 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
             , next_activity.organization_name
          """
          : string.Empty;
+      var activityMatchCteSql = includeNextActivity
+         ? $$"""
+         with {{MemberWatchActivityMatcher.GetActivityMatchesCteSql(
+            filterToMember: true
+         )}}
+         """
+         : string.Empty;
       var nextActivityJoin = includeNextActivity
          ? $$"""
          left join lateral (
@@ -309,11 +412,9 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
                   nullif(btrim(organization.alias_name), ''),
                   organization.canonical_name
                ) as organization_name
-            from activities activity
-            join activity_entity_links activity_link
-               on activity_link.activity_id = activity.id
-               and activity_link.entity_id = e.id
-               and activity_link.is_active
+            from watch_activity_matches watch_match
+            join activities activity
+               on activity.id = watch_match.activity_id
             left join entities organization
                on organization.id =
                   {{ActivityRepository.GetActivityOrganizationEntityIdSql(
@@ -321,6 +422,8 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
                   )}}
             where activity.publication_status_id =
                '{{ActivityPublicationStatusIds.Published}}'
+               and watch_match.member_id = @member_id
+               and watch_match.entity_id = e.id
                and activity.starts_at > @now
                and not (
                   (
@@ -381,6 +484,7 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
             """;
 
       return $$"""
+         {{activityMatchCteSql}}
          select
             e.id,
             e.canonical_name,
@@ -398,6 +502,8 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
             primary_image.license_name,
             primary_image.license_url
             {{nextActivitySelect}}
+            , e.entity_type_id
+            , nullif(btrim(e.alias_name), '')
          from entities e
          join sports s on s.id = e.sport_id
          left join lateral (
@@ -467,7 +573,7 @@ public sealed class MemberWatchRepository(NpgsqlDataSource dataSource)
          ) context on true
          {{nextActivityJoin}}
          {{additionalFromSql}}
-         where e.entity_type_id = '{{TrackedEntityTypeIds.Person}}'
+         where e.entity_type_id = any(@entity_type_ids)
             {{additionalWhereSql}}
          {{orderBySql}}
          {{limitSql}}

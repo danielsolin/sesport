@@ -26,7 +26,7 @@ public sealed class WatchesMarkupTests
       );
       var avatarPath = Path.Combine(
          repoRoot,
-         "src/SESport.Web/Pages/Account/_WatchPersonAvatar.cshtml"
+         "src/SESport.Web/Pages/Account/_WatchEntityAvatar.cshtml"
       );
       var cssPath = Path.Combine(
          repoRoot,
@@ -83,7 +83,7 @@ public sealed class WatchesMarkupTests
       Assert.Contains("RelatedOrganizationName", page);
       Assert.Contains("member-watch-next-activity", page);
       Assert.Contains(
-         "PartialAsync(\"_WatchPersonAvatar\", watch)",
+         "PartialAsync(\"_WatchEntityAvatar\", watch)",
          page
       );
       Assert.Contains("data-member-watch-add-row", searchResults);
@@ -95,7 +95,7 @@ public sealed class WatchesMarkupTests
          searchResults
       );
       Assert.Contains(
-         "PartialAsync(\"_WatchPersonAvatar\", person,",
+         "PartialAsync(\"_WatchEntityAvatar\", entity,",
          searchResults
       );
       Assert.Contains(
@@ -143,7 +143,7 @@ public sealed class WatchesMarkupTests
          model
       );
       Assert.Contains(
-         "GetPersonPrimaryImageAsync",
+         "GetWatchableEntityPrimaryImageAsync",
          model
       );
       Assert.Contains("Skicka notis", model);

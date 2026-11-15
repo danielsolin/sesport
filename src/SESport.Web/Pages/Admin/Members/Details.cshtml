@@ -83,7 +83,8 @@ else if(Model.Member is not null)
             <table class="admin-table admin-table-compact">
                <thead>
                   <tr>
-                     <th>Person</th>
+                     <th>Type</th>
+                     <th>Entity</th>
                      <th>Sport</th>
                      <th>Related names</th>
                      <th>Next activity</th>
@@ -93,6 +94,7 @@ else if(Model.Member is not null)
                   @foreach(var watch in Model.Watches)
                   {
                      <tr>
+                        <td>@watch.EntityTypeId</td>
                         <td>@watch.Name</td>
                         <td>@watch.SportName</td>
                         <td>@watch.RelatedNames</td>

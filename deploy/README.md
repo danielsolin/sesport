@@ -63,13 +63,13 @@ docker compose up -d postgres
 - Install GoAccess on the web host for the `/Admin/Config/Stats` report
 - Copy the Caddyfile into the Caddy config location used on the VPS
 - `https://dev.sesport.se` is a development site, not a published staging build. It
-  runs the web project from `/home/daniel/sesport/src/SESport.Web` and watches
+  runs the web project from `/home/daniel/src/sesport/src/SESport.Web` and watches
   the source tree for changes.
 - Keep a host-local `.env` in the repository root on each machine that runs
   a systemd service. The file is intentionally ignored by git, but
-  local AI-run service units load it through
-  `EnvironmentFile=/home/daniel/src/sesport/.env`. VPS units use the remote
-  checkout path `/home/daniel/sesport/.env`.
+  local AI-run service units and `sesport-dev.service` load it from
+  `/home/daniel/src/sesport/.env`. Other VPS units use
+  `/home/daniel/sesport/.env`.
 - The SearXNG override is mounted directly from the repo by `compose.yaml`
 - SearXNG is intended to run locally on the machine that runs AI jobs.
   It is not exposed through the public `*.sesport.se` sites.

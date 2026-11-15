@@ -1,5 +1,6 @@
+@using SESport.Core.Domain
 @using SESport.Data.Models
-@model MemberPersonListItem
+@model MemberWatchListItem
 @{
    var primaryImageUrl = Url.Page(
       "/Account/Watches",
@@ -78,7 +79,7 @@ else if(Model.HasPrimaryImage)
            decoding="async" />
    </span>
 }
-else
+else if(Model.EntityTypeId == TrackedEntityTypeIds.Person)
 {
    <span class="member-watch-avatar"
          aria-hidden="true">
@@ -89,6 +90,21 @@ else
                d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4
                   1.79-4 4 1.79 4 4 4Zm0 2c-4.42 0-8 1.79-8
                   4v2h16v-2c0-2.21-3.58-4-8-4Z" />
+      </svg>
+   </span>
+}
+else
+{
+   <span class="member-watch-avatar"
+         aria-hidden="true">
+      <svg viewBox="0 0 24 24"
+           focusable="false"
+           aria-hidden="true">
+         <path fill="currentColor"
+               d="M12 2 4 5v6c0 5 3.4 8.6 8 11 4.6-2.4
+                  8-6 8-11V5l-8-3Zm0 2.2 5.8 2.2V11
+                  c0 3.8-2.4 6.7-5.8 8.7C8.6 17.7 6.2
+                  14.8 6.2 11V6.4L12 4.2Z" />
       </svg>
    </span>
 }

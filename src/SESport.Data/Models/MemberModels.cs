@@ -1,3 +1,5 @@
+using SESport.Core.Domain;
+
 namespace SESport.Data.Models;
 
 public sealed record AdminMemberListItem(
@@ -26,6 +28,26 @@ public sealed record MemberPersonListItem(
       string.IsNullOrWhiteSpace(RelatedNames)
          ? SportName
          : $"{SportName}, {RelatedNames}";
+}
+
+public sealed record MemberWatchListItem(
+   Guid Id,
+   string Name,
+   string EntityTypeId,
+   string? AliasName,
+   string SportName,
+   string RelatedNames,
+   MemberNextActivity? NextActivity = null,
+   bool HasPrimaryImage = false,
+   MemberPrimaryImageSource? PrimaryImageSource = null,
+   bool IsWatched = false
+)
+{
+   public string DisplayInformation =>
+      EntityTypeId == TrackedEntityTypeIds.Person &&
+      !string.IsNullOrWhiteSpace(RelatedNames)
+         ? $"{SportName}, {RelatedNames}"
+         : SportName;
 }
 
 public sealed record MemberNextActivity(

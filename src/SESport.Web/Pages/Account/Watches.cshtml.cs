@@ -21,7 +21,7 @@ public sealed class WatchesModel(
       PropertyNameCaseInsensitive = true
    };
 
-   public IReadOnlyList<MemberPersonListItem> WatchedEntities
+   public IReadOnlyList<MemberWatchListItem> WatchedEntities
    {
       get;
       private set;
@@ -77,7 +77,7 @@ public sealed class WatchesModel(
       CancellationToken cancellationToken
    )
    {
-      var image = await watchRepository.GetPersonPrimaryImageAsync(
+      var image = await watchRepository.GetWatchableEntityPrimaryImageAsync(
          entityId,
          cancellationToken
       );
@@ -103,8 +103,8 @@ public sealed class WatchesModel(
       var query = NormalizeQuery(q);
       var results = query is null || query.Length <
          MemberWatchDefaults.MinimumSearchLength
-         ? Array.Empty<MemberPersonListItem>()
-         : await watchRepository.SearchPeopleAsync(
+         ? Array.Empty<MemberWatchListItem>()
+         : await watchRepository.SearchWatchableEntitiesAsync(
             query,
             GetMemberId(),
             MemberWatchDefaults.MaxSearchResults,

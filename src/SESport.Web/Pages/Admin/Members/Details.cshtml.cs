@@ -12,7 +12,7 @@ public sealed class DetailsModel(
 {
    public AdminMemberListItem? Member { get; private set; }
 
-   public IReadOnlyList<MemberPersonListItem> Watches { get; private set; } =
+   public IReadOnlyList<MemberWatchListItem> Watches { get; private set; } =
       [];
 
    public string? LoadError { get; private set; }
