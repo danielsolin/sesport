@@ -200,6 +200,7 @@ Work only on selected broadcasts that remain visible.
 
 - [ ] Set sport, activity type, calendar date, broadcast times, time zone, channels,
   and organization.
+- [ ] Prefer a matching `NationalTeam` as the activity organization, if such exists. 
 - [ ] Follow existing publication conventions.
 - [ ] Save authoritative event evidence.
 - [ ] Link every confirmed Swedish competitor as a Person participant.
