@@ -338,10 +338,9 @@ V Sport Golf and Viaplay Finalrundan rows at 19:00–22:00 and 19:00–23:00.
 
 ## Dashboard and validation
 
-- /Admin/Dashboard redirected to /Admin/Login (HTTP 302). The repository .env
-  contains PostgreSQL settings but no admin password; the authenticated
-  “Activities needing attention” list could not be checked. Operator access is
-  needed to finish this check.
+- Retried /Admin/Dashboard using Admin__Password from repository .env. The
+  “Activities needing attention” section showed “No upcoming activity issues.”
+  No dashboard data correction was needed.
 - Database read-back verified 41 hidden rejections, 7 processed broadcasts, 74
   visible unresolved broadcasts, eight exact event links, and no rejected or
   unresolved activity links.
